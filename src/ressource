@@ -1,0 +1,85 @@
+#!/bin/bash
+
+if [[ -n $RESRC_BASE_VERSION ]]
+then
+    function RESRC_BASE_copier { # <ressource> [destination]
+        if [ -z "${1}" ]
+        then
+            RESRC_BASE_erreur "Appel invalide de RESRC_BASE_copier."
+        fi
+        local ressource="${RESRC_BASE_PROFIL_DOSSIER}/ressources/${1}"
+        if [ -f "${ressource}" ] || [ -d "${ressource}" ]
+        then
+            local destination="${RESRC_BASE_PROJET_DOSSIER}/${2}"
+            if [ -n "${2}" ]
+            then
+                local destination_dossier=$(dirname "${destination}")
+                if [ ! -d "${destination_dossier}" ]
+                then 
+                    if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
+                        RESRC_BASE_afficher "Création du dossier de destination \"${destination_dossier}\"..."
+                    fi
+                    mkdir -p "${destination_dossier}"
+                fi
+            fi
+            # TODO Ressource déjà existante
+            # if [ -f "${???}" ] || [ -d "${???}" ]
+            # then
+            #     if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_force]}" -eq 0 ]
+            #     then
+            #         RESRC_BASE_afficher "Ressource \"${1}\" déjà existante dans le dossier du projet (${???})."
+            #         local choix
+            #         RESRC_BASE_demander choix "Voulez-vous remplacer cette ressource (o/n) ?"
+            #         if [[ "$choix" == [Nn]* ]]
+            #         then
+            #             if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
+            #                 RESRC_BASE_afficher "La ressource \"${ressource}\" n'a pas été copié."
+            #             fi
+            #             return
+            #         fi
+            #     fi
+            #     if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
+            #         RESRC_BASE_afficher "Suppression de la ressource \"${???}\"..."
+            #     fi
+            #     rm -rf "${???}"
+            # fi
+            if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
+                RESRC_BASE_afficher "Copie de la ressource \"${ressource}\" vers \"${destination}\"..."
+            fi
+            cp -r "${ressource}" "${destination}" 
+        else
+            RESRC_BASE_erreur "La ressource \"${ressource}\" n'existe pas."
+        fi
+    }
+
+    # Variables disponibles pour la configuration
+    RESRC_BASE_CONFIGURATION=(
+        RESRC_BASE_VERSION                  # Version de resrc-base
+        RESRC_BASE_PROJET                   # Nom du projet
+        RESRC_BASE_ORG                      # Organisation affiliée au projet
+    )
+
+    function RESRC_BASE_configurer { # <ressource importée>
+        if [ -z "${1}" ]
+        then
+            RESRC_BASE_erreur "Appel invalide de RESRC_BASE_configurer."
+        fi
+        local ressource="${RESRC_BASE_PROJET_DOSSIER}/${1}"
+        if [ -f "${ressource}" ]
+        then
+            if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
+                RESRC_BASE_afficher "Configuration de la ressource \"${ressource}\"..."
+            fi
+            # Depuis une réponse de F. Hauri (https://stackoverflow.com/a/30539879)
+            local sed=''
+            for variable in "${RESRC_BASE_CONFIGURATION[@]}"
+            do
+                printf -v s 's/${%s}/%s/;' "$variable" "${!variable//\//\\/}"
+                sed+="${s}"
+            done
+            sed -i "${sed}" "${ressource}"
+        else
+            RESRC_BASE_avertissement "Impossible de configurer la ressource \"${ressource}\"."
+        fi
+    }
+fi

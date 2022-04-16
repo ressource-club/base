@@ -1,0 +1,32 @@
+#!/bin/bash
+
+if [[ -n $RESRC_BASE_VERSION ]]
+then
+    function RESRC_BASE_afficher {
+        local prefix
+        local profil
+        for profil in "${RESRC_BASE_PROFIL_ACTIFS[@]}"
+        do
+            prefix+="${profil} > "
+        done
+        echo "[resrc/base] $prefix${*}"
+    }
+
+    function RESRC_BASE_avertissement {
+        RESRC_BASE_afficher "AVERTISSEMENT | ${*}"
+    }
+
+    function RESRC_BASE_erreur {
+        RESRC_BASE_afficher "ERREUR | ${*}"
+        exit
+    }
+
+    function RESRC_BASE_demander { # <nom variable> <message>
+        if [ -z "${2}" ]
+        then
+            RESRC_BASE_erreur "Appel invalide de RESRC_BASE_demander."
+        fi
+        RESRC_BASE_afficher "${2}"
+        read -r "${1}"
+    }
+fi

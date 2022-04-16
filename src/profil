@@ -1,0 +1,72 @@
+#!/bin/bash
+
+if [[ -n $RESRC_BASE_VERSION ]]
+then
+    function RESRC_BASE_profil_configuration {
+        if [ -z "${RESRC_BASE_PROJET}" ]
+        then
+            RESRC_BASE_erreur "Aucun projet cible défini."
+        fi
+        RESRC_BASE_PROJET_DOSSIER="${RESRC_BASE_INITIAL}/${RESRC_BASE_PROJET}"
+        
+        if [ -d "${RESRC_BASE_PROJET_DOSSIER}" ]
+        then
+            RESRC_BASE_afficher "Dossier du projet déjà existant ($RESRC_BASE_PROJET_DOSSIER)."
+            if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_force]}" -eq 0 ]
+            then
+                local choix
+                RESRC_BASE_demander choix "Voulez-vous supprimer ce dossier et son contenu (o/n) ?"
+                if [[ "$choix" == [Nn]* ]]
+                then
+                    RESRC_BASE_demander choix "Souhaitez-vous continuer l'exécution du profil (o/n) ?"
+                    if [[ "$choix" == [Nn]* ]]; then exit; 
+                    elif [[ "$choix" == [Oo]* ]]; then return; fi
+                fi
+            fi
+            if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ] || [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_force]}" -eq 1 ]; then
+                RESRC_BASE_afficher "Suppression du dossier..."
+            fi
+            rm -rf "$RESRC_BASE_PROJET_DOSSIER"
+        fi
+        if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
+            RESRC_BASE_afficher "Création du dossier du projet ($RESRC_BASE_PROJET_DOSSIER)..."
+        fi
+        mkdir "$RESRC_BASE_PROJET_DOSSIER"
+    }
+
+    function RESRC_BASE_profil { # <profil>
+        if [ -z "${1}" ]
+        then
+            RESRC_BASE_erreur "Appel invalide de RESRC_BASE_profil."
+        fi
+        if [ -n "${RESRC_BASE_PROFIL_DOSSIER}" ]
+        then
+            local tmp_RESRC_BASE_PROFIL_DOSSIER=${RESRC_BASE_PROFIL_DOSSIER}
+        fi
+        RESRC_BASE_PROFIL_DOSSIER="${RESRC_BASE_INITIAL}/${1}"
+        if [ ! -d "${profil_dossier}" ]
+        then
+            RESRC_BASE_PROFIL_DOSSIER="${RESRC_BASE_DOSSIER}/profils/${1}"
+        fi
+        local profil_src="${RESRC_BASE_PROFIL_DOSSIER}/profil"
+        unset "args[0]"
+        if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
+            RESRC_BASE_afficher "Chargement du profil depuis le fichier \"$profil_src\"..."
+        fi
+        if [ -f "${profil_src}" ]
+        then
+            RESRC_BASE_PROFIL_ACTIFS+=("${1}")
+            if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
+                RESRC_BASE_afficher "Lancement du script du profil..."
+            fi
+            . "${profil_src}"
+            if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
+                RESRC_BASE_afficher "Profil appliqué."
+            fi
+            unset "RESRC_BASE_PROFIL_ACTIFS[${#RESRC_BASE_PROFIL_ACTIFS[@]} - 1]"
+            RESRC_BASE_PROFIL_DOSSIER="${tmp_RESRC_BASE_PROFIL_DOSSIER}"
+        else
+            RESRC_BASE_erreur "Fichier de profil introuvable : ${1}"
+        fi
+    }
+fi

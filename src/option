@@ -1,0 +1,106 @@
+#!/bin/bash
+
+if [[ -n $RESRC_BASE_VERSION ]]
+then
+    # OPTIONS
+
+    ## Système d'enregistrement
+    declare -a RESRC_BASE_OPTS              # Tableau des valeurs des options.
+    declare -a RESRC_BASE_OPTS_MOTS         # Tableau des mots associés aux options.
+    declare -a RESRC_BASE_OPTS_CARACTERES   # Tableau des caractères associés aux options.
+
+    function RESRC_BASE_index { # <nom_liste_identifiants> <identifiant>
+        if [ -z "${2}" ]
+        then
+            RESRC_BASE_erreur "Appel invalide de RESRC_BASE_index."
+        fi
+        declare -a liste=("${!1}")
+        local n=${#liste[@]}
+        local i
+        for ((i = 0; i < n; i++))
+        do
+            if [[ ${liste[$i]} == "$2" ]]
+            then return "$i"; fi
+        done
+        return "$RESRC_BASE_ERR"
+    }
+
+    function RESRC_BASE_opt_ajout { # <mot> <caractere> <valeur>
+        if [ -z "${3}" ]
+        then
+            RESRC_BASE_erreur "Définition d'option invalide : ${*}"
+        fi
+        RESRC_BASE_index RESRC_BASE_OPTS_MOTS "$1"
+        if [ ! $? -eq "$RESRC_BASE_ERR" ]
+        then
+            RESRC_BASE_erreur "Le mot d'option \"${1}\" est déjà utilisé."
+        fi
+        RESRC_BASE_OPTS_MOTS+=("$1")
+        RESRC_BASE_index RESRC_BASE_OPTS_CARACTERES "$2"
+        if [ ! $? -eq "$RESRC_BASE_ERR" ]
+        then
+            RESRC_BASE_erreur "Le caractère d'option \"${2}\" est déjà utilisé."
+        fi
+        RESRC_BASE_OPTS_CARACTERES+=("$2")
+        RESRC_BASE_OPTS+=("$3")
+        return $((${#RESRC_BASE_OPTS[*]} - 1))
+    }
+
+    ## Ajout des options
+    function RESRC_BASE_opts_ajout {
+        ### Aide
+        RESRC_BASE_opt_ajout "aide" "?" 0
+        RESRC_BASE_OPT_aide=$?
+        ### Mode verbose
+        RESRC_BASE_opt_ajout "verbose" "v" 0
+        RESRC_BASE_OPT_verbose=$?
+        ### Mode force
+        RESRC_BASE_opt_ajout "force" "f" 0
+        RESRC_BASE_OPT_force=$?
+    }
+
+    ## Récupération des valeurs depuis les arguments
+    RESRC_BASE_OPT_PREFIX_MOT="--"
+    RESRC_BASE_OPT_PREFIX_CARACTERE="-"
+    function RESRC_BASE_opts {
+        local N_PREFIX_MOT=${#RESRC_BASE_OPT_PREFIX_MOT}
+        local N_PREFIX_CARACTERE=${#RESRC_BASE_OPT_PREFIX_CARACTERE}
+        local n=${#RESRC_BASE_ARGS[@]}
+        local index_opt=0
+        local i
+        for ((i = 0; i < n; i++))
+        do
+            if [[ ${RESRC_BASE_ARGS[$i]:0:$N_PREFIX_MOT} == "$RESRC_BASE_OPT_PREFIX_MOT" ]]
+            then
+                local mot=${RESRC_BASE_ARGS[$i]:$N_PREFIX_MOT}
+                if [ ${#mot} -eq 0 ]
+                then
+                    unset "RESRC_BASE_ARGS[$i]"   # On retire l'argument...
+                    return                        # Et on arrête.
+                fi
+                RESRC_BASE_index RESRC_BASE_OPTS_MOTS[@] "${mot}"
+                index_opt=$?
+            elif [[ ${RESRC_BASE_ARGS[$i]:0:$N_PREFIX_CARACTERE} == "$RESRC_BASE_OPT_PREFIX_CARACTERE" ]]
+            then
+                local caractere=${RESRC_BASE_ARGS[$i]:$N_PREFIX_CARACTERE}
+                if [ ${#caractere} -eq 0 ]
+                then
+                    unset "RESRC_BASE_ARGS[$i]"   # On retire l'argument...
+                    return                      # Et on arrête.
+                fi
+                RESRC_BASE_index RESRC_BASE_OPTS_CARACTERES[@] "${caractere}"
+                index_opt=$?
+            # Si aucun type d'option détecté, la recherche s'arrête.
+            else return
+            fi
+            if [[ $index_opt -eq $RESRC_BASE_ERR ]]; then
+                if [ $RESRC_BASE_OPT_verbose -eq 1 ]; then
+                    RESRC_BASE_avertissement "Option inconnue : ${RESRC_BASE_ARGS[$i]}"
+                fi
+            else
+                RESRC_BASE_OPTS[$index_opt]=1
+            fi
+            unset "RESRC_BASE_ARGS[$i]"   # On retire l'argument...
+        done
+    }
+fi

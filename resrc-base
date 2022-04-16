@@ -1,0 +1,50 @@
+#!/bin/bash
+export RESRC_BASE_VERSION="0.0.1"
+RESRC_BASE_ERR=255
+
+RESRC_BASE_INITIAL=$PWD
+RESRC_BASE_DOSSIER=$(realpath $(dirname $0))
+cd "$RESRC_BASE_DOSSIER" || exit
+
+# Imports
+function RESRC_BASE_src {
+    . "$RESRC_BASE_DOSSIER/src/$1"
+}
+RESRC_BASE_src "console"
+RESRC_BASE_src "option"
+RESRC_BASE_src "ressource"
+RESRC_BASE_src "profil"
+
+RESRC_BASE_afficher "resrc-base v${RESRC_BASE_VERSION}"
+
+# Chargement
+RESRC_BASE_ARGS=("$@")
+RESRC_BASE_opts_ajout           # Ajout des options prises en charge.
+RESRC_BASE_opts                 # Lecture des arguments et mise à jour des options (et des arguments).
+
+# Exécution
+RESRC_BASE_ARGS=("${RESRC_BASE_ARGS[@]}")
+RESRC_BASE_ARGC=${#RESRC_BASE_ARGS[@]}
+if [[ $RESRC_BASE_ARGC -lt 2 ]]
+then
+    if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_aide]}" -eq 0 ]
+    then
+        RESRC_BASE_afficher "Usage : resrc-base [options] <profil> <projet>"
+    else
+        RESRC_BASE_aide
+    fi
+else
+    RESRC_BASE_PROFIL="${RESRC_BASE_ARGS[0]}"
+    unset "RESRC_BASE_ARGS[0]"
+    RESRC_BASE_PROJET="${RESRC_BASE_ARGS[1]}"
+    unset "RESRC_BASE_ARGS[1]"
+
+    RESRC_BASE_ARGS=("${RESRC_BASE_ARGS[@]}")
+    RESRC_BASE_ARGC=$((RESRC_BASE_ARGC - 2))
+    
+    RESRC_BASE_profil_configuration
+    RESRC_BASE_profil "${RESRC_BASE_PROFIL}"
+    RESRC_BASE_afficher "Le profil a bien été appliqué au projet \"${RESRC_BASE_PROJET}\"."
+fi
+
+cd "$RESRC_BASE_INITIAL" || exit
