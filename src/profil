@@ -44,7 +44,7 @@ then
             local tmp_RESRC_BASE_PROFIL_DOSSIER=${RESRC_BASE_PROFIL_DOSSIER}
         fi
         RESRC_BASE_PROFIL_DOSSIER="${RESRC_BASE_INITIAL}/${1}"
-        if [ ! -d "${profil_dossier}" ]
+        if [ ! -d "${RESRC_BASE_PROFIL_DOSSIER}" ]
         then
             RESRC_BASE_PROFIL_DOSSIER="${RESRC_BASE_DOSSIER}/profils/${1}"
         fi
@@ -60,9 +60,7 @@ then
                 RESRC_BASE_afficher "Lancement du script du profil..."
             fi
             . "${profil_src}"
-            if [ "${RESRC_BASE_OPTS[$RESRC_BASE_OPT_verbose]}" -eq 1 ]; then
-                RESRC_BASE_afficher "Profil appliqué."
-            fi
+            RESRC_BASE_afficher "Profil appliqué."
             unset "RESRC_BASE_PROFIL_ACTIFS[${#RESRC_BASE_PROFIL_ACTIFS[@]} - 1]"
             RESRC_BASE_PROFIL_DOSSIER="${tmp_RESRC_BASE_PROFIL_DOSSIER}"
         else

@@ -1,3 +1,6 @@
 [submodule "profils/resrc-base"]
 	path = profils/resrc-base
 	url = git@github.com:ressource-club/base-profil.git
+[submodule "profils/resrc-profil"]
+	path = profils/resrc-profil
+	url = git@github.com:ressource-club/base-profil-profil.git

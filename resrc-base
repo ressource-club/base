@@ -1,5 +1,5 @@
 #!/bin/bash
-export RESRC_BASE_VERSION="0.0.1"
+export RESRC_BASE_VERSION="0.0.2"
 RESRC_BASE_ERR=255
 
 RESRC_BASE_INITIAL=$PWD
@@ -44,7 +44,6 @@ else
     
     RESRC_BASE_profil_configuration
     RESRC_BASE_profil "${RESRC_BASE_PROFIL}"
-    RESRC_BASE_afficher "Le profil a bien été appliqué au projet \"${RESRC_BASE_PROJET}\"."
 fi
 
 cd "$RESRC_BASE_INITIAL" || exit
